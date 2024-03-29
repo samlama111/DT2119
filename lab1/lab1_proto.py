@@ -22,7 +22,7 @@ def mspec(
     frames = enframe(samples, winlen, winshift)
     preemph = preemp(frames, preempcoeff)
     windowed = windowing(preemph)
-    spec = powerSpectrum(windowed, nfft)
+    spec, _ = powerSpectrum(windowed, nfft)
     return logMelSpectrum(spec, samplingrate)
 
 
@@ -142,9 +142,15 @@ def powerSpectrum(input, nfft):
         array of power spectra [N x nfft]
     Note: you can use the function fft from scipy.fftpack
     """
+    # FFT returns an array of frequency components, from 0 to nfft.
     fft_res = fft(input, n=nfft)
-    power_spectrum = np.abs(pow(fft_res, 2))
-    return power_spectrum
+    power_spectrum = pow(np.abs(fft_res), 2)
+    # Nyquist frequency is half of the sampling rate, so we only need half of the spectrum.
+    # we cannot use anything above the Nyquist frequency, so we can slice the array.
+    nyquist_point = int(nfft / 2) + 1
+
+    power_spectrum_nyquist = power_spectrum[:, :nyquist_point]
+    return power_spectrum, power_spectrum_nyquist
 
 
 def logMelSpectrum(input, samplingrate):
