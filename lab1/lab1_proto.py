@@ -145,8 +145,9 @@ def powerSpectrum(input, nfft):
     # FFT returns an array of frequency components, from 0 to nfft.
     fft_res = fft(input, n=nfft)
     power_spectrum = pow(np.abs(fft_res), 2)
-    # Nyquist frequency is half of the sampling rate, so we only need half of the spectrum.
-    # we cannot use anything above the Nyquist frequency, so we can slice the array.
+    # Result is symmetric around Nyquist point.
+    # We are interested in frequencies from 0 to Nyquist point, as the rest is redundant.
+    # This point corresponds to f_max.
     nyquist_point = int(nfft / 2) + 1
 
     power_spectrum_nyquist = power_spectrum[:, :nyquist_point]
