@@ -110,20 +110,20 @@ def forward(log_emlik, log_startprob, log_transmat):
         log_transmat: log transition probability from state i to j
 
     Output:
-        forward_prob: NxM array of forward log probabilities for each of the M states in the model
+        log_alpha: NxM array of forward log probabilities for each of the M states in the model
     """
     N, M = log_emlik.shape
-    forward_prob = np.zeros((N, M))
+    log_alpha = np.zeros((N, M))
     
     # Initialization step
-    forward_prob[0, :] = log_startprob[:-1] + log_emlik[0, :]
+    log_alpha[0, :] = log_startprob[:-1] + log_emlik[0, :]
     
     # Recursion step
     for n in range(1, N):
         for j in range(M):
-            forward_prob[n, j] = logsumexp(forward_prob[n-1, :] + log_transmat[:-1, j]) + log_emlik[n, j]
+            log_alpha[n, j] = logsumexp(log_alpha[n-1, :] + log_transmat[:-1, j]) + log_emlik[n, j]
 
-    return forward_prob
+    return log_alpha
 
 def backward(log_emlik, log_startprob, log_transmat):
     """Backward (beta) probabilities in log domain.
