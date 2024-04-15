@@ -1,34 +1,55 @@
 import numpy as np
-from tools2 import *
+from lab2_tools import *
 
 def concatTwoHMMs(hmm1, hmm2):
-    """ Concatenates 2 HMM models
+    """ Concatenates 2 HMM models according to the structure given in the image.
 
     Args:
-       hmm1, hmm2: two dictionaries with the following keys:
-           name: phonetic or word symbol corresponding to the model
-           startprob: M+1 array with priori probability of state
-           transmat: (M+1)x(M+1) transition matrix
-           means: MxD array of mean vectors
-           covars: MxD array of variances
+        hmm1, hmm2: two dictionaries with the following keys:
+            name: phonetic or word symbol corresponding to the model
+            startprob: M+1 array with a priori probability of state
+            transmat: (M+1)x(M+1) transition matrix
+            means: MxD array of mean vectors
+            covars: MxD array of variances
 
-    D is the dimension of the feature vectors
-    M is the number of emitting states in each HMM model (could be different for each)
-
-    Output
-       dictionary with the same keys as the input but concatenated models:
-          startprob: K+1 array with priori probability of state
-          transmat: (K+1)x(K+1) transition matrix
-             means: KxD array of mean vectors
+    Output:
+        dictionary with the same keys but concatenated models:
+            startprob: K+1 array with priori probability of state
+            transmat: (K+1)x(K+1) transition matrix
+            means: KxD array of mean vectors
             covars: KxD array of variances
 
-    K is the sum of the number of emitting states from the input models
-   
-    Example:
-       twoHMMs = concatHMMs(phoneHMMs['sil'], phoneHMMs['ow'])
-
-    See also: the concatenating_hmms.pdf document in the lab package
+    K is the sum of the number of emitting states from the input models plus one for the non-emitting state.
     """
+
+    # Initialize start probability vector and transition matrix using nr of emitting states for hmm1 and hmm2.
+    M1 = len(hmm1['startprob'])
+    M2 = len(hmm2['startprob'])
+    startprob = np.zeros(M1 + M2 - 1)
+    transmat = np.zeros((M1 + M2 - 1, M1 + M2 - 1))
+
+    # Calculate startprob
+    startprob[:M1-1] = hmm1['startprob'][:-1]
+    startprob[M1-1:] = hmm1['startprob'][-1] * hmm2['startprob']
+
+    # Calculate transition matrix
+    transmat[:M1-1, :M1-1] = hmm1['transmat'][:-1, :-1]
+    transmat[:M1-1, M1-1:] = np.outer(hmm1['transmat'][:-1, -1], hmm2['startprob'])
+    transmat[M1-1:, M1-1:] = hmm2['transmat']
+
+    # Calculate means and covars
+    means_concat = np.vstack((hmm1['means'], hmm2['means']))
+    covars_concat = np.vstack((hmm1['covars'], hmm2['covars']))
+
+    return {
+        'name': f"{hmm1['name']}+{hmm2['name']}",
+        'startprob': startprob,
+        'transmat': transmat,
+        'means': means_concat,
+        'covars': covars_concat
+    }
+
+
 
 # this is already implemented, but based on concat2HMMs() above
 def concatHMMs(hmmmodels, namelist):
