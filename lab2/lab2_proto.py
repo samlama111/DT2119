@@ -196,19 +196,47 @@ def statePosteriors(log_alpha, log_beta):
     Output:
         log_gamma: NxM array of gamma probabilities for each of the M states in the model
     """
+    N, M = log_alpha.shape
+    log_denom = logsumexp(log_alpha[N - 1])
+    log_gamma = log_alpha + log_beta - log_denom
+
+    return log_gamma
 
 def updateMeanAndVar(X, log_gamma, varianceFloor=5.0):
     """ Update Gaussian parameters with diagonal covariance
 
     Args:
-         X: NxD array of feature vectors
-         log_gamma: NxM state posterior probabilities in log domain
-         varianceFloor: minimum allowed variance scalar
-    were N is the lenght of the observation sequence, D is the
+        X: NxD array of feature vectors
+        log_gamma: NxM state posterior probabilities in log domain
+        varianceFloor: minimum allowed variance scalar
+    where N is the length of the observation sequence, D is the
     dimensionality of the feature vectors and M is the number of
     states in the model
 
     Outputs:
-         means: MxD mean vectors for each state
-         covars: MxD covariance (variance) vectors for each state
+        means: MxD mean vectors for each state
+        covars: MxD covariance (variance) vectors for each state
     """
+
+    # From https://mzaradzki.github.io/probabilistic-javascript/demos/hmm.html
+    
+    _, D = X.shape
+    M = log_gamma.shape[1]
+    gamma = np.exp(log_gamma)
+    sums_gamma = np.sum(gamma, axis=0)
+    
+    # Compute weighted sum of data points ('X') with weights given by 'gamma'.
+    # Dividing by sums_gamma normalizes to get mean for each state.
+    means = np.dot(gamma.T, X) / sums_gamma[:, np.newaxis]
+
+    # Compute the weighted sum of squared differences (diff) for each feature
+    weighted_squares = np.zeros((M, D))
+    weighted_squares = np.array([[np.sum(gamma[:, k] * (X[:, d] - means[k, d])**2) for d in range(D)] for k in range(M)])
+
+    # Normalize by sums_gamma to get the variances
+    covars = weighted_squares / sums_gamma[:, np.newaxis]
+    
+    # Apply variance floor
+    covars[covars < varianceFloor] = varianceFloor
+    
+    return means, covars
