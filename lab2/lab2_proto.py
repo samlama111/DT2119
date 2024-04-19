@@ -89,17 +89,26 @@ def concatHMMs(hmmmodels, namelist):
 
 
 def gmmloglik(log_emlik, weights):
-    """Log Likelihood for a GMM model based on Multivariate Normal Distribution.
-
+    """
+    Log Likelihood for a GMM model based on Multivariate Normal Distribution.
+    
     Args:
         log_emlik: array like, shape (N, K).
-            contains the log likelihoods for each of N observations and
-            each of K distributions
-        weights:   weight vector for the K components in the mixture
-
+            Contains the log likelihoods for each of N observations and
+            each of K distributions.
+        weights: array like, shape (K,).
+            Weight vector for the K components in the mixture.
+    
     Output:
         gmmloglik: scalar, log likelihood of data given the GMM model.
     """
+    emlik = np.exp(log_emlik)
+    weighted_probs = emlik * weights
+    sum_probs = np.sum(weighted_probs, axis=1)
+    log_sum_probs = np.log(sum_probs)
+    total_log_likelihood = np.sum(log_sum_probs)
+    
+    return total_log_likelihood
 
 def forward(log_emlik, log_startprob, log_transmat):
     """Forward (alpha) probabilities in log domain.
