@@ -1,8 +1,8 @@
-import numpy as np
 from lab3_tools import *
 
+
 def words2phones(wordList, pronDict, addSilence=True, addShortPause=True):
-    """ word2phones: converts word level to phone level transcription adding silence
+    """word2phones: converts word level to phone level transcription adding silence
 
     Args:
        wordList: list of word symbols
@@ -12,13 +12,25 @@ def words2phones(wordList, pronDict, addSilence=True, addShortPause=True):
     Output:
        list of phone symbols
     """
+    result_list = []
+    if addSilence:
+        result_list.append("sil")
+    for word in wordList:
+        for phone in pronDict[word]:
+            result_list.append(phone)
+        if addShortPause:
+            result_list.append("sp")
+    if addSilence:
+        result_list.append("sil")
+    return result_list
+
 
 def forcedAlignment(lmfcc, phoneHMMs, phoneTrans):
-    """ forcedAlignmen: aligns a phonetic transcription at the state level
+    """forcedAlignmen: aligns a phonetic transcription at the state level
 
     Args:
        lmfcc: NxD array of MFCC feature vectors (N vectors of dimension D)
-              computed the same way as for the training of phoneHMMs
+             computed the same way as for the training of phoneHMMs
        phoneHMMs: set of phonetic Gaussian HMM models
        phoneTrans: list of phonetic symbols to be aligned including initial and
                    final silence
@@ -27,4 +39,3 @@ def forcedAlignment(lmfcc, phoneHMMs, phoneTrans):
        list of strings in the form phoneme_index specifying, for each time step
        the state from phoneHMMs corresponding to the viterbi path.
     """
-
